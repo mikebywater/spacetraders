@@ -1,0 +1,59 @@
+version: '3.5'
+services:
+
+  # The Application
+  spacetraders-app:
+    container_name: spacetraders-app
+    image: spacetraders-app
+    build:
+      context: ./
+      dockerfile: docker/application/Dockerfile
+    ports:
+      - 9055:9000
+    networks:
+      - spacetraders
+    volumes:
+      - ./:/var/www:cached
+    depends_on:
+      - spacetraders-db
+
+  # The Web Server
+  spacetraders-web:
+    container_name: spacetraders-web
+    image: spacetraders-web
+    build:
+      context: ./
+      dockerfile: docker/web/Dockerfile
+    working_dir: /var/www
+    depends_on:
+      - spacetraders-app
+    networks:
+      - spacetraders
+    volumes:
+      - ./public:/var/www/public:cached
+    ports:
+          - 8055:80
+
+  # The Database
+  spacetraders-db:
+    container_name: spacetraders-db
+    networks:
+      - spacetraders
+    image: mysql:5.7
+    volumes:
+      - spacetraders-db:/var/lib/mysql
+    environment:
+      - "MYSQL_ROOT_PASSWORD=secret"
+      - "MYSQL_USER=spacetraders"
+      - "MYSQL_PASSWORD=secret"
+      - "MYSQL_DATABASE=spacetraders"
+    ports:
+      - 33055:3306
+
+volumes:
+  spacetraders-db:
+  grafana:
+
+networks:
+   spacetraders:
+     name: spacetraders

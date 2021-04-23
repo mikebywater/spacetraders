@@ -1,0 +1,31 @@
+2021-03-05 00:16:50,888 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2021-03-05 00:16:50,906 INFO RPC interface 'supervisor' initialized
+2021-03-05 00:16:50,912 INFO supervisord started with pid 1
+2021-03-05 00:16:51,914 INFO spawned: 'php' with pid 10
+2021-03-05 00:16:53,191 INFO success: php entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2021-04-18 22:23:52,163 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2021-04-18 22:23:52,178 INFO RPC interface 'supervisor' initialized
+2021-04-18 22:23:52,184 INFO supervisord started with pid 1
+2021-04-18 22:23:53,188 INFO spawned: 'php' with pid 10
+2021-04-18 22:23:54,352 INFO success: php entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2021-04-23 09:00:32,343 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2021-04-23 09:00:32,367 INFO RPC interface 'supervisor' initialized
+2021-04-23 09:00:32,373 INFO supervisord started with pid 1
+2021-04-23 09:00:33,376 INFO spawned: 'php' with pid 10
+2021-04-23 09:00:34,564 INFO success: php entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2021-04-23 09:42:48,295 WARN received SIGQUIT indicating exit request
+2021-04-23 09:42:48,297 INFO waiting for php to die
+2021-04-23 09:42:48,302 INFO stopped: php (exit status 0)
+2021-04-23 09:42:56,147 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2021-04-23 09:42:56,154 INFO RPC interface 'supervisor' initialized
+2021-04-23 09:42:56,158 INFO supervisord started with pid 1
+2021-04-23 09:42:57,163 INFO spawned: 'php' with pid 10
+2021-04-23 09:42:58,207 INFO success: php entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2021-04-23 09:43:49,691 WARN received SIGQUIT indicating exit request
+2021-04-23 09:43:49,692 INFO waiting for php to die
+2021-04-23 09:43:49,697 INFO stopped: php (exit status 0)
+2021-04-23 09:46:36,576 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2021-04-23 09:46:36,585 INFO RPC interface 'supervisor' initialized
+2021-04-23 09:46:36,589 INFO supervisord started with pid 1
+2021-04-23 09:46:37,594 INFO spawned: 'php' with pid 10
+2021-04-23 09:46:38,635 INFO success: php entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)

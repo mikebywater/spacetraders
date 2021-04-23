@@ -9,5 +9,7 @@ class Location extends Model
 {
     use HasFactory;
 
+    public $incrementing = false;
+
     public $guarded = [];
 }

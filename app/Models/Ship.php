@@ -8,5 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 class Ship extends Model
 {
     use HasFactory;
+    public $incrementing = false;
     public $guarded = [];
 }

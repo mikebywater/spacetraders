@@ -57,6 +57,7 @@ class GetUserInfo extends Command
                 $ship->x = 0;
                 $ship->y = 0;
             }
+            Ship::truncate();
             Ship::updateOrCreate(['id' => $ship->id], ['class' => $ship->class, 'location' => $ship->location,
                 'manufacturer' => $ship->manufacturer, 'maxCargo' => $ship->maxCargo, "type" => $ship->type, "x" => $ship->x, "y" => $ship->y] );
         }

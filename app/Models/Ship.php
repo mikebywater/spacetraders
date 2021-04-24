@@ -13,7 +13,7 @@ class Ship extends Model
 
     public function getStatusAttribute()
     {
-        if ($this->location = ""){
+        if ($this->location == ""){
             return "in_flight";
         }else{
            return "docked";

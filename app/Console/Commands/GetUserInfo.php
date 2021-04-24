@@ -44,6 +44,9 @@ class GetUserInfo extends Command
     public function handle()
     {
         $user = $this->client->users->get(getenv('ST_USERNAME'))->user;
+        if(empty($user->loans)){
+            $this->client->loans->takeout(getenv('ST_USERNAME'), 'STARTUP');
+        }
         $loan = $user->loans[0]->repaymentAmount;
         User::updateOrCreate(['username' => getenv('ST_USERNAME')] , ['credits' => $user->credits, 'loan' => $loan]);
 
@@ -75,7 +78,7 @@ class GetUserInfo extends Command
             }
             Ship::updateOrCreate(['id' => $ship->id], ['class' => $ship->class, 'location' => $ship->location,
                 'manufacturer' => $ship->manufacturer, 'maxCargo' => $ship->maxCargo, "type" => $ship->type, "x" => $ship->x, "y" => $ship->y,
-                'fuel' => $ship->fuel] );
+                'fuel' => $ship->fuel, 'spaceAvailable' => $ship->spaceAvailable] );
         }
 
     }

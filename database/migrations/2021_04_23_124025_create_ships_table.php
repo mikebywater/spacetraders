@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class CreateShipsTable extends Migration
@@ -13,6 +14,7 @@ class CreateShipsTable extends Migration
      */
     public function up()
     {
+        DB::statement('SET SESSION sql_require_primary_key=0');
         Schema::create('ships', function (Blueprint $table) {
             $table->string("id")->primary();
             $table->string("class")->nullable();

@@ -26,6 +26,7 @@ class CreateShipsTable extends Migration
             $table->biginteger("weapons")->nullable();
             $table->float("x")->nullable();
             $table->float ("y")->nullable();
+            $table->integer("fuel")->nullable();
             $table->timestamps();
         });
     }

@@ -25,6 +25,7 @@ Route::get('/', function () {
 
     // Get Planets
     $planets = Location::where('type' , 'PLANET')->get();
+    $moons = Location::where('type' , '!=', 'PLANET')->get();
 
 
     // Get Ships
@@ -32,7 +33,7 @@ Route::get('/', function () {
 
     // return view
 
-    return view('welcome')->with(['user' => $user, 'planets' => $planets, 'ships' => $ships]);
+    return view('welcome')->with(['user' => $user, 'planets' => $planets, 'ships' => $ships, "moons" => $moons]);
 
 
 });

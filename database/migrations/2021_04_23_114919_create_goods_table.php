@@ -18,6 +18,8 @@ class CreateGoodsTable extends Migration
             $table->biginteger("quantityAvailable");
             $table->biginteger("volumePerUnit");
             $table->biginteger("pricePerUnit");
+            $table->string('type')->nullable();
+            $table->string('location')->nullable();
             $table->timestamps();
         });
     }

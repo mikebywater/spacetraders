@@ -19,6 +19,7 @@ class CreateLocationsTable extends Migration
             $table->string('type');
             $table->float('x');
             $table->float('y');
+            $table->boolean('scouted')->default(false);
             $table->timestamps();
         });
     }

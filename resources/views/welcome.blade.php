@@ -42,12 +42,12 @@
                         <span class="circle circle-6"></span>
                     </div>
                     <div class="visibility-hidden" data-toggle="appear" data-class="animated fadeIn" data-timeout="800">
-                        <span class="circle circle-over-1 hidden-xs"><span data-toggle="countTo" data-to="798" data-speed="100000"></span></span>
+                        <span class="circle circle-over-1 hidden-xs"><span data-toggle="countTo" data-to="{{$user->loan}}" data-speed="1000"></span></span>
                         <span class="circle circle-over-2 hidden-xs"></span>
                         <span class="circle circle-over-3 hidden-xs"></span>
                     </div>
                     <span class="circle circles-main-content visibility-hidden" data-toggle="appear" data-class="animated fadeIn" data-timeout="100">
-                                <span data-toggle="countTo" data-to="{{($user->credits - $user->loan)}}" data-speed="600"></span><br>
+                                <span data-toggle="countTo" data-to="{{($user->credits)}}" data-speed="600"></span><br>
                                 <span class="text-crystal">Credits</span>
                             </span>
                 </div>
@@ -70,50 +70,10 @@
 
             <!-- Left Column -->
             <div class="col-sm-6 col-lg-3 col-lg-pull-6">
-                <!-- Environment -->
-                <div class="block">
-                    <div class="block-header overflow-hidden">
-                        <h2 class="block-title visibility-hidden" data-toggle="appear" data-class="animated fadeInDown">Environment</h2>
-                    </div>
-                    <div class="block-content">
-                        <div class="row items-push overflow-hidden">
-                            <div class="col-xs-4 text-center visibility-hidden" data-toggle="appear" data-class="animated fadeInLeft" data-timeout="100">
-                                <div class="js-pie-chart pie-chart" data-percent="50" data-line-width="5" data-size="65" data-bar-color="rgba(255, 255, 255, .2)" data-track-color="rgba(255, 255, 255, .1)">
-                                    <span class="font-s16 font-w600">PSI</span>
-                                </div>
-                            </div>
-                            <div class="col-xs-8 visibility-hidden" data-toggle="appear" data-class="animated fadeInRight" data-timeout="400">
-                                <div class="text-uppercase font-w600 text-white-op">Pressure</div>
-                                <div class="font-s36 font-w300">15.65</div>
-                            </div>
-                        </div>
-                        <div class="row items-push overflow-hidden">
-                            <div class="col-xs-4 text-center visibility-hidden" data-toggle="appear" data-class="animated fadeInLeft" data-timeout="200">
-                                <div class="js-pie-chart pie-chart" data-percent="29" data-line-width="5" data-size="65" data-bar-color="rgba(255, 255, 255, .2)" data-track-color="rgba(255, 255, 255, .1)">
-                                    <span class="font-s16 font-w600">%</span>
-                                </div>
-                            </div>
-                            <div class="col-xs-8 visibility-hidden" data-toggle="appear" data-class="animated fadeInRight" data-timeout="500">
-                                <div class="text-uppercase font-w600 text-white-op">Oxygen</div>
-                                <div class="font-s36 font-w300">29.15</div>
-                            </div>
-                        </div>
-                        <div class="row items-push overflow-hidden">
-                            <div class="col-xs-4 text-center visibility-hidden" data-toggle="appear" data-class="animated fadeInLeft" data-timeout="300">
-                                <div class="js-pie-chart pie-chart" data-percent="60" data-line-width="5" data-size="65" data-bar-color="rgba(255, 255, 255, .2)" data-track-color="rgba(255, 255, 255, .1)">
-                                    <span class="font-s16 font-w600">C&deg;</span>
-                                </div>
-                            </div>
-                            <div class="col-xs-8 visibility-hidden" data-toggle="appear" data-class="animated fadeInRight" data-timeout="600">
-                                <div class="text-uppercase font-w600 text-white-op">Temperature</div>
-                                <div class="font-s36 font-w300">5.3</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- END Environment -->
 
                 @include('partials.planets')
+
+                @include('partials.moons')
             </div>
             <!-- END Left Column -->
 
@@ -189,13 +149,6 @@
         </div>
         <!-- END Columns -->
 
-        <!-- Page Footer -->
-        <div class="block">
-            <div class="block-content block-content-full font-s12 text-center visibility-hidden" data-toggle="appear" data-class="animated fadeIn" data-timeout="1000">
-                2016 &copy; Crafted with <span class="text-danger">&hearts;</span> by <a class="link-sf" href="https://pixelcave.com/">pixelcave</a>
-            </div>
-        </div>
-        <!-- END Page Footer -->
     </main>
     <!-- END Main Content -->
 </div>

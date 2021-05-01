@@ -25,6 +25,8 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
          $schedule->command('st:update')->everyMinute();
+         $schedule->command('st:loop')->everyTwoMinutes();
+        $schedule->command('st:update')->everyTwoMinutes();
     }
 
     /**

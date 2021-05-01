@@ -6,6 +6,7 @@ use App\Models\Good;
 use App\Models\Location;
 use App\Models\Ship;
 use App\Models\User;
+use App\Services\UserService;
 use Illuminate\Console\Command;
 use RayBlair\SpaceTradersPHP\SpaceTradersPHP;
 
@@ -41,16 +42,12 @@ class GetUserInfo extends Command
      *
      * @return int
      */
-    public function handle()
+    public function handle(UserService $userService)
     {
-        $user = $this->client->users->get(getenv('ST_USERNAME'))->user;
-        if(empty($user->loans)){
-            $this->client->loans->takeout(getenv('ST_USERNAME'), 'STARTUP');
-        }
-        $loan = $user->loans[0]->repaymentAmount;
-        User::updateOrCreate(['username' => getenv('ST_USERNAME')] , ['credits' => $user->credits, 'loan' => $loan]);
 
+        $userService->update();
         $locations = $this->client->systems->get('OE');
+       // $locations = $this->client->systems->get('XV');
         foreach($locations->locations as $location) {
                 Location::updateOrCreate(['id' => $location->symbol], ['name' => $location->name, 'type' => $location->type, 'x' => $location->x, 'y' => $location->y]);
             }
@@ -88,8 +85,11 @@ class GetUserInfo extends Command
                 $goods = $result->marketplace;
                 foreach ($goods as $good){
                     Good::updateOrCreate(['id' => $location . '-' . $good->symbol], ["quantityAvailable" => $good->quantityAvailable,
-                        "pricePerUnit" => $good->pricePerUnit, "volumePerUnit" => $good->volumePerUnit, "location" => $location, "type" => $good->symbol]);
+                        "pricePerUnit" => $good->pricePerUnit, "purchasePricePerUnit" => $good->purchasePricePerUnit,
+                        "sellPricePerUnit" => $good->sellPricePerUnit  ,"volumePerUnit" => $good->volumePerUnit,
+                         "location" => $location, "type" => $good->symbol]);
                 }
             }
+        Location::updateOrCreate(['id' => $location] , ['scouted' => true]);
     }
 }

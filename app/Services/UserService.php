@@ -15,7 +15,7 @@ class UserService
         $this->client = new SpaceTradersPHP(getenv('ST_TOKEN'), getenv('ST_USERNAME'));
     }
 
-    public function update()
+    public function refresh()
     {
         $user = $this->client->users->get(getenv('ST_USERNAME'))->user;
         if(empty($user->loans)){

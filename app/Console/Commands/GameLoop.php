@@ -9,6 +9,7 @@ use App\Models\Trade;
 use App\Models\User;
 use App\Services\ShipService;
 use App\Services\SpaceTradersService;
+use App\Services\TradeService;
 use App\Services\UserService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Auth;
@@ -29,16 +30,26 @@ class GameLoop extends Command
      * @var string
      */
     protected $description = 'Fly the planes!';
+    /**
+     * @var ShipService
+     */
+    private $shipService;
+    /**
+     * @var TradeService
+     */
+    private $tradeService;
 
     /**
      * Create a new command instance.
      *
      * @return void
      */
-    public function __construct(UserService $userService, ShipService $shipService, SpaceTradersService $service)
+    public function __construct(UserService $userService, ShipService $shipService, SpaceTradersService $service, TradeService $tradeService)
     {
         $this->userService = $userService;
         $this->client = $service();
+        $this->shipService = $shipService;
+        $this->tradeService = $tradeService;
         parent::__construct();
     }
 
@@ -63,45 +74,21 @@ class GameLoop extends Command
         {
             $this->client->ships->purchase(getenv('ST_USERNAME'), 'OE-UC-OB', 'ZA-MK-II');
         }
-
+        $this->userService->refresh();
+        $this->shipService->refreshAll();
 
         //fuel docked ships
 
-        $docked = Ship::where('location' , '!=', '')->get();
-        foreach ($docked as $ship){
-            $this->sellGoods($ship);
-            $this->buyGoods($ship);
+        foreach ($this->shipService->findDocked() as $ship){
+
+            $this->shipService->refuel($ship->id);
+            $this->shipService->sellCargo($ship->id);
+            $route = $this->tradeService->plotRoute($ship->location);
+            $this->shipService->buyCargo($ship, $route['good'] , $this->user->credits - 1000);
+            $this->shipService->fly($ship->id, $route['destination']);
+            //update goods
+           // $this->buyGoods($ship);
         }
-    }
-
-    private function fuel($ship)
-    {
-        // check if fuel low and buy some if it is always have 20 reserved for fuel
-        if($ship->fuel < 40) {
-            $qty = min(40 - $ship->fuel, $ship->spaceAvailable);
-            if($qty > 0){
-                try {
-                    $this->client->orders->purchase(getenv('ST_USERNAME'), $ship->id, 'FUEL', $qty);
-                }catch (\Exception $e){
-                    print($ship->id . " | " . $ship->spaceAvailable .  " | " . $qty);
-                }
-                $ship->spaceAvailable = $ship->spaceAvailable - $qty;
-                $ship->fuel =  $ship->fuel + $qty;
-                $ship->save();
-            }
-
-        }
-        return $ship;
-    }
-
-    private function fly($ship, $destination){
-        try{
-            $this->client->flightPlans->create(getenv('ST_USERNAME'), $ship->id , $destination->id);
-        }catch(\Exception $e){
-            print("insufficient fuel");
-        }
-
-        return $ship;
     }
 
     private function buyGoods($ship)

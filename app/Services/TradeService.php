@@ -56,23 +56,36 @@ class TradeService
         foreach($results as $result) {
             $goods = $result->marketplace;
             foreach ($goods as $good) {
-                $price = $good->purchasePricePerUnit;
-                $sales = Good::where('type', $good->symbol)->get();
-                foreach ($sales as $sale) {
-                    $margin = $sale->sellPricePerUnit - $price;
-                    if ($margin > $best) {
-                        $destination = $sale->location;
-                        $best = $margin;
-                        $best_good = $good;
+                if($good->symbol != 'FUEL'){
+                    $price = $good->purchasePricePerUnit;
+                    $sales = Good::where('type', $good->symbol)->get();
+                    foreach ($sales as $sale) {
+                        $margin = $sale->sellPricePerUnit - $price;
+                        $fuel = $this->calculateFuel($location, $sale->location);
+                        if ($margin > $best && $fuel < 50) {
+                            $destination = $sale->location;
+                            $best = $margin;
+                            $best_good = $good;
+                            $best_fuel = $fuel;
+                            print("fuel is " . $fuel . " and margin is " . $margin ."\r\n");
+                        }
                     }
                 }
+
             }
+            return ['destination' => $destination, 'good' => $best_good , 'margin' => $best, 'fuel' => $best_fuel ];
         }
-        return ['destination' => $destination, 'good' => $best_good , 'margin' => $margin, 'fuel' => $this->calculateFuel($location, $destination) ];
+
     }
 
     public function calculateFuel($location, $destination)
     {
-        return 40;
+        $loc = Location::find($location);
+        $dest = Location::find($destination);
+        $a = abs($loc->x - $dest->x);
+        $b = abs($loc->y - $dest->y);
+
+        $fuel = intval(ceil(sqrt(($a * $a) + ($b * $b))) / 3);
+        return $fuel ;
     }
 }

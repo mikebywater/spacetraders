@@ -39,7 +39,8 @@ class ShipService
     {
         $ship = $this->find($ship_id);
         try{
-            $this->client->flightPlans->create(getenv('ST_USERNAME'), $ship->id , $location_id);
+            $plan = $this->client->flightPlans->create(getenv('ST_USERNAME'), $ship->id , $location_id);
+            print_r($plan);
             return true;
         }catch(\Exception $e){
             print("insufficient fuel");
@@ -65,7 +66,7 @@ class ShipService
     }
 
     // Fill fuel up to 40 or specified amount
-    public function refuel(String $ship_id, $qty = 40)
+    public function refuel(String $ship_id, $qty = 50)
     {
         // check if fuel low and buy some if it is always have 20 reserved for fuel
         $ship = $this->find($ship_id);
@@ -73,13 +74,15 @@ class ShipService
             $qty = min($qty - $ship->fuel, $ship->spaceAvailable);
             if($qty > 0){
                 try {
-                    $this->client->orders->purchase(getenv('ST_USERNAME'), $ship->id, 'FUEL', $qty);
+                    $buy = $this->client->orders->purchase(getenv('ST_USERNAME'), $ship->id, 'FUEL', $qty);
                 }catch (\Exception $e){
                     print($ship->id . " | " . $ship->spaceAvailable .  " | " . $qty);
                 }
                 $ship->spaceAvailable = $ship->spaceAvailable - $qty;
                 $ship->fuel =  $ship->fuel + $qty;
                 $ship->save();
+                Trade::create(['ship_id' => $ship->id, 'type' => 'PURCHASE',
+                    'good' => 'FUEL', 'location_id' => $ship->location, 'total_credits' => $buy->credits, 'value' => $buy->order->total]);
             }
 
         }
@@ -115,10 +118,13 @@ class ShipService
 
     public function buyCargo(Ship $ship, $good, $budget)
     {
+
         $space = $ship->spaceAvailable / $good->volumePerUnit;
         $stock = $good->quantityAvailable;
         $afford = $budget / $good->purchasePricePerUnit;
-        $qty = floor(min( $space, $stock, $afford));
+        $qty = intval(floor(min( $space, $stock, $afford)));
+
+        print($ship->spaceAvailable . "|" . $qty * $good->volumePerUnit);
 
         $good = $good->symbol;
 

@@ -42,3 +42,5 @@
 2021-05-01 13:17:42,971 INFO supervisord started with pid 1
 2021-05-01 13:17:43,974 INFO spawned: 'php' with pid 10
 2021-05-01 13:17:45,122 INFO success: php entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2021-05-01 22:30:14,312 INFO reaped unknown pid 3756
+2021-05-01 22:30:14,314 INFO reaped unknown pid 3737

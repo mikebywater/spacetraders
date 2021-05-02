@@ -61,17 +61,19 @@ class GameLoop extends Command
     public function handle()
     {
 
-        //buy ships
-        $user = User::where('username' , getenv('ST_USERNAME'))->first();
-        $this->user = $user;
-        $ship_total = Ship::all()->count();
-        if($user->credits > 100000 and $ship_total < 10)
-        {
-            // buy ship
-            $this->client->ships->purchase(getenv('ST_USERNAME'), 'OE-PM-TR', 'EM-MK-I');
+        $locations = $this->client->systems->get('OE');
+        // $locations = $this->client->systems->get('XV');
+        foreach($locations->locations as $location) {
+            Location::updateOrCreate(['id' => $location->symbol], ['name' => $location->name, 'type' => $location->type, 'x' => $location->x, 'y' => $location->y]);
         }
-        if($user->credits > 80000 and $ship_total < 10)
-        {
+        //buy ships
+        $this->user = $this->userService->refresh();
+        $ship_total = Ship::all()->count();
+        if ($this->user->credits > 150000 and $ship_total < 2) {
+            // buy ship
+           // $this->client->ships->purchase(getenv('ST_USERNAME'), 'OE-PM-TR', 'EM-MK-I');
+        }
+        if ($this->user->credits > 100000 and $ship_total < 4) {
             $this->client->ships->purchase(getenv('ST_USERNAME'), 'OE-UC-OB', 'ZA-MK-II');
         }
         $this->userService->refresh();
@@ -79,90 +81,37 @@ class GameLoop extends Command
 
         //fuel docked ships
 
-        foreach ($this->shipService->findDocked() as $ship){
+        foreach ($this->shipService->findDocked() as $ship) {
 
             $this->shipService->refuel($ship->id);
             $this->shipService->sellCargo($ship->id);
+            $this->tradeService->updateGoods($ship->location);
             $route = $this->tradeService->plotRoute($ship->location);
-            $this->shipService->buyCargo($ship, $route['good'] , $this->user->credits - 1000);
-            $this->shipService->fly($ship->id, $route['destination']);
-            //update goods
-           // $this->buyGoods($ship);
-        }
-    }
-
-    private function buyGoods($ship)
-    {
-        $location = "";
-        $best = -1000;
-        $best_good = "";
-
-        //select goods
-        $results = $this->client->locations->marketplace($ship->location);
-        foreach($results as $result) {
-            $goods = $result->marketplace;
-            foreach ($goods as $good)
-                if($good->symbol == "FUEL"){
-                   $ship = $this->fuel($ship);
-                }else{
-                    $price = $good->purchasePricePerUnit;
-                    $sales = Good::where('type' , $good->symbol)->get();
-                    foreach($sales as $sale){
-                        $margin = $sale->sellPricePerUnit - $price;
-                        if($margin > $best){
-                            $location = $sale->location;
-                            $best = $margin;
-                            $best_good = $sale->type;
-                            $qty = intval(floor(min($ship->spaceAvailable / $sale->volumePerUnit, $sale->quantityAvailable)));
-                        }
-                    }
+            print("ROUTE fuel is " . $route['fuel'] . " and ROUTE margin is " . $route['margin'] ."\r\n");
+            // if a margin then trade else explore
+            if($route['margin'] > 0){
+                $this->user = $this->userService->refresh();
+                if($this->shipService->buyCargo($ship, $route['good'], $this->user->credits * 0.9 )){
+                    $this->tradeService->updateGoods($ship->location);
+                    $this->shipService->fly($ship->id, $route['destination']);
                 }
-            }
-
-            if($location != "" and $best > 4 and $qty > 0){
-                try{
-                    $buy = $this->client->orders->purchase(getenv('ST_USERNAME'), $ship->id, $best_good, $qty);
-                    Trade::create(['ship_id' => $ship->id, 'type' => 'PURCHASE',
-                        'good' => $best_good, 'location_id' => $ship->location, 'total_credits' => $buy->credits, 'value' => $buy->order->total]);
-                    $this->fly($ship, $location);
-                }catch(\Exception $e) {
-                    print($e->getMessage() . $ship->id . " | " . $best_good . " | " . $ship->spaceAvailable .  " | " . $qty);
-                    try{
-                        $buy= $this->client->orders->purchase(getenv('ST_USERNAME'), $ship->id, $best_good, 4);
-                        Trade::create(['ship_id' => $ship->id, 'type' => 'PURCHASE',
-                            'good' => $best_good, 'location_id' => $ship->location, 'total_credits' => $buy->credits, 'value' => $buy->order->total]);
-                        $this->fly($ship, $location);
-                    }catch(\Exception $e) {
-                        print($e->getMessage() . $ship->id . " | " . $best_good . " | " . $ship->spaceAvailable .  " | " . $qty);
-                    }
-                }
-
 
             }else{
-                $location = Location::where('id' , "!=" , $ship->location)->where('type' , "!=", "WORMHOLE")->has('goods' , 0)->get()->first();
-                if($location){
-                    $this->fly($ship, $location);
-                }else{
-                    $location = Location::where('id' , "!=" , $ship->location)->where('type' , "!=", "WORMHOLE")->get()->random(1)->first();
-                    $this->fly($ship, $location);
+                try{
+                    $destination = Location::where('scouted' , 0)->where('type', '!=' , 'WORMHOLE')->get()->random(1)->first();
+                    $this->shipService->fly($ship->id,$destination->id);
+                }catch(\Exception $e){
+                    $destination = Location::where('type', '!=' , 'WORMHOLE')->where('type', '!=', 'PLANET')->get()->random(3)->first();
+                    // need to work a good route out here but I reckon for now just random!
+                    $this->shipService->fly($ship->id,$destination->id);
+
                 }
+
             }
 
-        return $ship;
-    }
 
-    private function sellGoods($ship)
-    {
-        $cargo = $this->client->ships->get(getenv('ST_USERNAME'), $ship->id)->ship->cargo;
-        foreach ($cargo as $good)
-        {
-
-            if($good->good != "FUEL"){
-                $sale = $this->client->orders->sell(getenv('ST_USERNAME'), $ship->id, $good->good, $good->quantity);
-                Trade::create(['ship_id' => $ship->id, 'type' => 'SALE',
-                    'good' => $good->good, 'location_id' => $ship->location, 'total_credits' => $sale->credits, 'value' => $sale->order->total ]);
-            }
         }
-        return $ship;
+        $this->userService->refresh();
+        $this->shipService->refreshAll();
     }
 }

@@ -15,11 +15,17 @@ use phpDocumentor\Reflection\Types\Boolean;
 class ShipService
 {
 
-    public function __construct(Ship $ship, Trade $trade, SpaceTradersService $client)
+    /**
+     * @var UserService
+     */
+    private $userService;
+
+    public function __construct(Ship $ship, Trade $trade, SpaceTradersService $client, UserService $userService)
     {
         $this->client = $client();
         $this->ship = $ship;
         $this->trade = $trade;
+        $this->userService = $userService;
     }
 
     // Find Ship
@@ -60,6 +66,7 @@ class ShipService
                 $sale = $this->client->orders->sell(getenv('ST_USERNAME'), $ship->id, $good->good, $good->quantity);
                 $this->trade->create(['ship_id' => $ship->id, 'type' => 'SALE',
                     'good' => $good->good, 'location_id' => $ship->location, 'total_credits' => $sale->credits, 'value' => $sale->order->total ]);
+                $this->userService->updateCredits($sale->credits);
             }
         }
         return $ship;
@@ -68,10 +75,13 @@ class ShipService
     // Fill fuel up to 40 or specified amount
     public function refuel(String $ship_id, $qty = 50)
     {
+
         // check if fuel low and buy some if it is always have 20 reserved for fuel
         $ship = $this->find($ship_id);
+        print("FUEL NEEDED ". $qty. " SHIP HAS " . $ship->fuel . "\r\n");
         if($ship->fuel < $qty) {
             $qty = min($qty - $ship->fuel, $ship->spaceAvailable);
+            print("ADDING ". $qty."\r\n");
             if($qty > 0){
                 try {
                     $buy = $this->client->orders->purchase(getenv('ST_USERNAME'), $ship->id, 'FUEL', $qty);
@@ -83,6 +93,7 @@ class ShipService
                 $ship->save();
                 Trade::create(['ship_id' => $ship->id, 'type' => 'PURCHASE',
                     'good' => 'FUEL', 'location_id' => $ship->location, 'total_credits' => $buy->credits, 'value' => $buy->order->total]);
+                $this->userService->updateCredits($buy->credits);
             }
 
         }
@@ -99,7 +110,7 @@ class ShipService
             $ship->fuel = 0;
             foreach ($goods as $good)
             {
-                if($good->good = 'FUEL'){
+                if($good->good == 'FUEL'){
                     $ship->fuel = $good->quantity;
                 }
             }
@@ -132,6 +143,7 @@ class ShipService
             $buy = $this->client->orders->purchase(getenv('ST_USERNAME'), $ship->id, $good, $qty);
             Trade::create(['ship_id' => $ship->id, 'type' => 'PURCHASE',
                 'good' => $good, 'location_id' => $ship->location, 'total_credits' => $buy->credits, 'value' => $buy->order->total]);
+            $this->userService->updateCredits($buy->credits);
             return true;
         }catch(\Exception $e) {
             print($e->getMessage());

@@ -60,43 +60,59 @@ class GameLoop extends Command
      */
     public function handle()
     {
-
-        $locations = $this->client->systems->get('OE');
-        // $locations = $this->client->systems->get('XV');
-        foreach($locations->locations as $location) {
-            Location::updateOrCreate(['id' => $location->symbol], ['name' => $location->name, 'type' => $location->type, 'x' => $location->x, 'y' => $location->y]);
+        if(Location::all()->count() == 0) {
+            $locations = $this->client->systems->get('OE');
+            // $locations = $this->client->systems->get('XV');
+            foreach ($locations->locations as $location) {
+                Location::updateOrCreate(['id' => $location->symbol], ['name' => $location->name, 'type' => $location->type, 'x' => $location->x, 'y' => $location->y]);
+            }
         }
         //buy ships
         $this->user = $this->userService->refresh();
         $ship_total = Ship::all()->count();
-        if ($this->user->credits > 150000 and $ship_total < 2) {
+        if ($this->user->credits > 150000 and $ship_total < 5) {
             // buy ship
-           // $this->client->ships->purchase(getenv('ST_USERNAME'), 'OE-PM-TR', 'EM-MK-I');
+            try{
+                $this->client->ships->purchase(getenv('ST_USERNAME'), 'OE-PM-TR', 'EM-MK-I');
+                $this->userService->refresh();
+                $this->shipService->refreshAll();
+            }catch(\Exception $e){
+                print($e->getMessage());
+            }
+
         }
         if ($this->user->credits > 100000 and $ship_total < 4) {
-            $this->client->ships->purchase(getenv('ST_USERNAME'), 'OE-UC-OB', 'ZA-MK-II');
+
+            try{
+                $this->client->ships->purchase(getenv('ST_USERNAME'), 'OE-UC-OB', 'ZA-MK-II');
+                $this->userService->refresh();
+                $this->shipService->refreshAll();
+            }catch(\Exception $e){
+                print($e->getMessage());
+            }
         }
-        $this->userService->refresh();
-        $this->shipService->refreshAll();
+
+
 
         //fuel docked ships
+        $this->shipService->refreshAll();
 
         foreach ($this->shipService->findDocked() as $ship) {
 
-            $this->shipService->refuel($ship->id);
             $this->shipService->sellCargo($ship->id);
             $this->tradeService->updateGoods($ship->location);
             $route = $this->tradeService->plotRoute($ship->location);
+
             print("ROUTE fuel is " . $route['fuel'] . " and ROUTE margin is " . $route['margin'] ."\r\n");
             // if a margin then trade else explore
             if($route['margin'] > 0){
-                $this->user = $this->userService->refresh();
+                $this->shipService->refuel($ship->id, $route['fuel'] );
                 if($this->shipService->buyCargo($ship, $route['good'], $this->user->credits * 0.9 )){
                     $this->tradeService->updateGoods($ship->location);
                     $this->shipService->fly($ship->id, $route['destination']);
                 }
-
             }else{
+                $this->shipService->refuel($ship->id);
                 try{
                     $destination = Location::where('scouted' , 0)->where('type', '!=' , 'WORMHOLE')->get()->random(1)->first();
                     $this->shipService->fly($ship->id,$destination->id);
@@ -111,7 +127,5 @@ class GameLoop extends Command
 
 
         }
-        $this->userService->refresh();
-        $this->shipService->refreshAll();
     }
 }

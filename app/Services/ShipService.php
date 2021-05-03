@@ -6,6 +6,7 @@ namespace App\Services;
 use App\Models\Good;
 use App\Models\Ship;
 use App\Models\Trade;
+use Illuminate\Support\Facades\Log;
 use phpDocumentor\Reflection\Types\Boolean;
 
 /**
@@ -46,10 +47,12 @@ class ShipService
         $ship = $this->find($ship_id);
         try{
             $plan = $this->client->flightPlans->create(getenv('ST_USERNAME'), $ship->id , $location_id);
-            print_r($plan);
+            Log::info(strtoupper(substr($ship->id, -4)) .
+                " is flying from " . $plan->flightPlan->departure . " to " . $plan->flightPlan->destination . " a total distance of " . $plan->flightPlan->distance .
+                " it will take " . $plan->flightPlan->timeRemainingInSeconds . " seconds consuming " . $plan->flightPlan->fuelConsumed . " fuel");
             return true;
         }catch(\Exception $e){
-            print("insufficient fuel");
+            Log::error(strtoupper(substr($ship->id, -4)). $e->getMessage() );
             return false;
         }
     }
@@ -67,21 +70,22 @@ class ShipService
                 $this->trade->create(['ship_id' => $ship->id, 'type' => 'SALE',
                     'good' => $good->good, 'location_id' => $ship->location, 'total_credits' => $sale->credits, 'value' => $sale->order->total ]);
                 $this->userService->updateCredits($sale->credits);
+                Log::info(strtoupper(substr($ship->id, -4)). " sold " . $good->quantity . " of " . $good->good . " at " . $ship->location . " for a total of " . $sale->order->total );
             }
         }
         return $ship;
     }
 
     // Fill fuel up to 40 or specified amount
-    public function refuel(String $ship_id, $qty = 50)
+    public function refuel(String $ship_id, $qty = 60)
     {
 
-        // check if fuel low and buy some if it is always have 20 reserved for fuel
         $ship = $this->find($ship_id);
-        print("FUEL NEEDED ". $qty. " SHIP HAS " . $ship->fuel . "\r\n");
+
+        Log::info( strtoupper(substr($ship->id, -4)). " needs " . $qty . " of fuel ship has " . $ship->fuel );
+
         if($ship->fuel < $qty) {
             $qty = min($qty - $ship->fuel, $ship->spaceAvailable);
-            print("ADDING ". $qty."\r\n");
             if($qty > 0){
                 try {
                     $buy = $this->client->orders->purchase(getenv('ST_USERNAME'), $ship->id, 'FUEL', $qty);
@@ -93,6 +97,9 @@ class ShipService
                 $ship->save();
                 Trade::create(['ship_id' => $ship->id, 'type' => 'PURCHASE',
                     'good' => 'FUEL', 'location_id' => $ship->location, 'total_credits' => $buy->credits, 'value' => $buy->order->total]);
+
+                Log::info( strtoupper(substr($ship->id, -4)). " added " . $qty . " of FUEL from " . $ship->location . " for a total cost of " . $buy->order->total );
+
                 $this->userService->updateCredits($buy->credits);
             }
 
@@ -135,18 +142,17 @@ class ShipService
         $afford = $budget / $good->purchasePricePerUnit;
         $qty = intval(floor(min( $space, $stock, $afford)));
 
-        print($ship->spaceAvailable . "|" . $qty * $good->volumePerUnit);
-
-        $good = $good->symbol;
-
         try{
-            $buy = $this->client->orders->purchase(getenv('ST_USERNAME'), $ship->id, $good, $qty);
+            $buy = $this->client->orders->purchase(getenv('ST_USERNAME'), $ship->id, $good->symbol, $qty);
             Trade::create(['ship_id' => $ship->id, 'type' => 'PURCHASE',
-                'good' => $good, 'location_id' => $ship->location, 'total_credits' => $buy->credits, 'value' => $buy->order->total]);
+                'good' => $good->symbol, 'location_id' => $ship->location, 'total_credits' => $buy->credits, 'value' => $buy->order->total]);
             $this->userService->updateCredits($buy->credits);
+
+            Log::info( strtoupper(substr($ship->id, -4)). " purchased " . $qty . " of " . $good->symbol . " at " . $good->purchasePricePerUnit ." from " . $ship->location . " for a total of " . $buy->order->total );
+
             return true;
         }catch(\Exception $e) {
-            print($e->getMessage());
+            Log::error($e->getMessage());
         }
         return false;
     }

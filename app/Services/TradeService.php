@@ -85,7 +85,7 @@ class TradeService
         $a = abs($loc->x - $dest->x);
         $b = abs($loc->y - $dest->y);
 
-        $fuel = intval(ceil(sqrt(($a * $a) + ($b * $b))) / 5) + 2;
+        $fuel = intval(ceil(sqrt(($a * $a) + ($b * $b))) / 5) + 3;
         return $fuel ;
     }
 }

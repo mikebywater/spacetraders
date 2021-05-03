@@ -13,6 +13,7 @@ use App\Services\TradeService;
 use App\Services\UserService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use RayBlair\SpaceTradersPHP\SpaceTradersPHP;
 
 class GameLoop extends Command
@@ -103,10 +104,10 @@ class GameLoop extends Command
             $this->tradeService->updateGoods($ship->location);
             $route = $this->tradeService->plotRoute($ship->location);
 
-            print("ROUTE fuel is " . $route['fuel'] . " and ROUTE margin is " . $route['margin'] ."\r\n");
             // if a margin then trade else explore
             if($route['margin'] > 0){
-                $this->shipService->refuel($ship->id, $route['fuel'] );
+                Log::info(strtoupper(substr($ship->id, -4)) . " plotted route departing from " . $ship->location . " to  " . $route['destination'] . " to sell " . $route['good']->symbol . " with a margin of " . $route['margin']  );
+                $ship = $this->shipService->refuel($ship->id, $route['fuel'] ); // set ship to refuelled version
                 if($this->shipService->buyCargo($ship, $route['good'], $this->user->credits * 0.9 )){
                     $this->tradeService->updateGoods($ship->location);
                     $this->shipService->fly($ship->id, $route['destination']);
@@ -114,17 +115,20 @@ class GameLoop extends Command
             }else{
                 $this->shipService->refuel($ship->id);
                 try{
-                    $destination = Location::where('scouted' , 0)->where('type', '!=' , 'WORMHOLE')->get()->random(1)->first();
+                    $destination = Location::where('scouted' , 0)->where('type', '!=' , 'WORMHOLE')->where('id' , "!=" , $ship->location)->get()->random(1)->first();
                     $this->shipService->fly($ship->id,$destination->id);
+                    Log::info(strtoupper(substr($ship->id, -4)). " plotted route departing from " . $ship->location . " to  " . $destination->id . " to scout the location"  );
                 }catch(\Exception $e){
-                    $destination = Location::where('type', '!=' , 'WORMHOLE')->where('type', '!=', 'PLANET')->get()->random(3)->first();
+                    $destination = Location::where('type', '!=' , 'WORMHOLE')->where('type', '!=', 'PLANET')->where('id' , "!=" , $ship->location)->get()->random(3)->first();
                     // need to work a good route out here but I reckon for now just random!
                     $this->shipService->fly($ship->id,$destination->id);
+                    Log::info(strtoupper(substr($ship->id, -4)). " plotted route departing from " . $ship->location . " to  " . $destination->id . " as no profitable route can be found"  );
 
                 }
 
             }
 
+            sleep(5); // Too many requests issue
 
         }
     }
